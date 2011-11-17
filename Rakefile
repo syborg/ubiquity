@@ -18,9 +18,10 @@ Jeweler::Tasks.new do |gem|
   gem.homepage = "http://github.com/syborg/ubiquity"
   gem.license = "MIT"
   gem.summary = %Q{gps track utilities}
-  gem.description = %Q{some utils to process gps tracks}
+  gem.description = %Q{a tiny framework to process gps tracks}
   gem.email = "xaxaupua@gmail.com"
   gem.authors = ["Marcel Massana"]
+  gem.version = Ubiquity::Version::STRING
   # dependencies defined in Gemfile
 end
 Jeweler::RubygemsDotOrgTasks.new
