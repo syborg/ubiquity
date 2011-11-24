@@ -61,6 +61,7 @@ module Ubiquity
         apdls
       end
 
+      # support methods
       private
 
       # Polygon Area.
