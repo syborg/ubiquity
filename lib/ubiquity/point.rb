@@ -2,21 +2,66 @@
 # Marcel Massana 12-Nov-2011
 
 require 'ubiquity/geoformulas'
+require 'ubiquity/algorithms'
 #require 'rubygems'
 #require 'mme_tools/debug'
 
 module Ubiquity
 
   # Geographic Point
+  #
+  # A part of lon and lat, it mantains x and y as aproximate projections to a plane tha can be used with
+  # algorithms for euclidean plane. For instance:
+  #
+  #
   class Point
 
-    attr_accessor :lon, :lat  # floats
-    attr_accessor :elems      # hash of additional features as time, elevation, ...
+    RAD_PER_DEG = Math::PI/180.0 # PI/180 rad/deg
+    PROJECTION_LATITUDE = RAD_PER_DEG * 45 # to project longitudes
 
+    # Class latitude used to make projections (calculate x from lon)
+
+    # sets the latitude used to project longitudes to x
+    def self.projection_lat=(val)
+      @@proj_lat = val
+    end
+
+    # returns the latitude used to project longitudes to x
+    def self.projection_lat
+      @@proj_lat
+    end
+
+    # Getters and Setters
+
+    attr_reader :lon, :lat # floats
+    attr_accessor :elems # hash of additional features such as time, elevation, ...
+    alias y lat
+
+    def lat=(lat)
+      @lat = lat
+      @x = nil
+    end
+
+    def lon=(lon)
+      @lon = lon
+      @x = nil
+    end
+
+    def x
+      @x ||= lon * Math.cos(@@proj_lat) # memoized
+    end
+
+    # constructor ...
     def initialize (lat, lon, elems = nil)
-      @lat=lat
-      @lon=lon
-      @elems = elems
+      @@proj_lat ||= PROJECTION_LATITUDE
+      self.lat=lat
+      self.lon=lon
+      self.elems = elems
+    end
+
+    # overrides Object#== equality test to make Array#include? work with Point
+    def ==(p)
+      (self.lat == p.lat) && (self.lon == p.lon)
     end
 
     # returns the distance from self to point
@@ -67,7 +112,7 @@ module Ubiquity
     end
 
     # returns true if self is within a circle centered at point with radius
-    def inside_circle?(point,radius)
+    def inside_circle?(point, radius)
       (self.distance_to(point) <= radius)
     end
 
@@ -75,7 +120,7 @@ module Ubiquity
     alias in_circle? inside_circle?
 
     # returns true if self is wthin a rectangle defined by two points
-    def inside_rect?(point1,point2)
+    def inside_rect?(point1, point2)
       lats = [point1.lat, point2.lat].sort
       lons = [point1.lon, point2.lon].sort
       la = self.lat
@@ -86,6 +131,10 @@ module Ubiquity
 
     alias within_rect? inside_rect?
     alias in_rect? inside_rect?
+
+    def self.convex_hull(*points)
+      Ubiquity::Algorithms.convex_hull *points
+    end
 
   end
 

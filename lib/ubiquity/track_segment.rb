@@ -4,6 +4,7 @@
 require 'rubygems'
 require 'nokogiri'
 require 'time'
+require 'ubiquity/error'
 require 'ubiquity/point'
 
 module Ubiquity
@@ -12,14 +13,45 @@ module Ubiquity
 
     attr_accessor :points
 
-    def initialize
-      @points = Array.new
+    # creates a TrackSegment. If Array pts given those points will conform the TrackSegment
+    def initialize(pts = nil)
+      self.points = Array.new
+      self.add_points pts if pts
     end
+
+    # Adds new points to the end of TrackSegment. If any problem no points are added.
+    # @param args [list of Points, TrackSegments or Arrays of any of them]
+    # @ retuns self if OK, nil if not added elements
+    def add_points *args
+      last = self.points.length
+      args.each do |arg|
+        case arg
+          when Point then
+            self.points << arg
+          when TrackSegment then
+            self.points += arg.points
+          when Array then
+            arg.each { |a| add_points a }
+          else
+            raise Ubiquity::Error::BadArgument, "args should be a list of Points, TrackSegments or Arrays of any of them"
+        end
+      end
+      self.clean_memoized # forces future recalculations
+      self
+    rescue
+      self.points.slice!(last..-1) # eliminates added elements if any
+      nil
+    end
+
+    alias + add_points
+    alias << add_points
+    alias concatenate add_points
+    alias join add_points
 
     # accepts a gpx (xml) string and parses its first track segment
     def parse_gpx(gpx)
-      doc = Nokogiri::XML(gpx)  # parse whole file into a Nokogiri document
-      doc = doc.at('trkseg')    # BTM select first track segment (others may exist: metadata, tracks, waypoints, routes)
+      doc = Nokogiri::XML(gpx) # parse whole file into a Nokogiri document
+      doc = doc.at('trkseg') # BTM select first track segment (others may exist: metadata, tracks, waypoints, routes)
 
       # Find out all points
       doc.search("trkpt").each do |tp|
@@ -28,11 +60,17 @@ module Ubiquity
 
         # other elements within a trackpoint
         elems = {}
-        if ele = tp.at("ele") then elems["ele"] = ele.text.to_f; end    # elevation
-        if time = tp.at("time") then elems["time"] = Time.parse(time.text); end  # time
-        if sat = tp.at("sat") then elems["sat"] = sat.text.to_i; end  # number of satelites
+        if ele = tp.at("ele") then
+          elems["ele"] = ele.text.to_f;
+        end # elevation
+        if time = tp.at("time") then
+          elems["time"] = Time.parse(time.text);
+        end # time
+        if sat = tp.at("sat") then
+          elems["sat"] = sat.text.to_i;
+        end # number of satelites
 
-        points << Point.new(lat,lon,elems)
+        self.add_points Point.new(lat, lon, elems)
       end
     end
 
@@ -41,10 +79,10 @@ module Ubiquity
     def to_gpx
       Nokogiri::XML::Builder.new do |xml|
         xml.gpx("version" => "1.1",
-          "creator" => "Ubiquity",
-          "xmlns" => "http://www.topografix.com/GPX/1/1",
-          "xmlns:xsi" => "http://www.w3.org/2001/XMLSchema-instance",
-          "xsi:schemaLocation" => "http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd") {
+                "creator" => "Ubiquity",
+                "xmlns" => "http://www.topografix.com/GPX/1/1",
+                "xmlns:xsi" => "http://www.w3.org/2001/XMLSchema-instance",
+                "xsi:schemaLocation" => "http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd") {
           #  xml.metadata {
           #    xml.lnk("href" => "www.marcel.com") {
           #      xml.text_ {   # '_' al final assegura que sera un tag i desambigua del metode text
@@ -55,12 +93,14 @@ module Ubiquity
           xml.trk {
             xml.trkseg {
               points.each do |p|
-                xml.trkpt("lat"=>p.lat,"lon"=>p.lon) {
+                xml.trkpt("lat"=>p.lat, "lon"=>p.lon) {
                   p.elems.each do |k, v|
                     val = case v
-                    when Time then v.iso8601
-                    else v.to_s
-                    end
+                            when Time then
+                              v.iso8601
+                            else
+                              v.to_s
+                          end
                     xml.send k, val
                   end
                 }
@@ -78,7 +118,7 @@ module Ubiquity
     def distance
       # we use memoization cause calculating distance is expensive
       @distance ||= begin
-        self.points.inject(nil) do |a,p|
+        self.points.inject(nil) do |a, p|
           new_pt = p
           if a
             last_pt = Ubiquity::Point.new(a[:last_lat], a[:last_lon], {'ele' => a[:last_ele]})
@@ -108,7 +148,7 @@ module Ubiquity
     def up_slope
       # we use memoization because calculating slope is expensive
       @up_slope ||= begin
-        self.points.inject(nil) do |a,p|
+        self.points.inject(nil) do |a, p|
           new_ele = p.elems["ele"]
           if a
             last_ele = a[:last_ele]
@@ -128,7 +168,7 @@ module Ubiquity
     def down_slope
       # we use memoization because calculating slope is expensive
       @down_slope ||= begin
-        self.points.inject(nil) do |a,p|
+        self.points.inject(nil) do |a, p|
           new_ele = p.elems["ele"]
           if a
             last_ele = a[:last_ele]
@@ -142,6 +182,21 @@ module Ubiquity
           a
         end[:down]
       end
+    end
+
+    def convex_hull
+      @convex_hull ||= Algorithms.convex_hull(*self.points)
+    end
+
+    #private
+
+    # cleans internally precalculated (memoized) data.
+    def clean_memoized
+      @distance = nil
+      @slope = nil
+      @up_slope = nil
+      @down_slope = nil
+      @convex_hull = nil
     end
 
   end
