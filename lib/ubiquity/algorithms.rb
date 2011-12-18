@@ -1,4 +1,4 @@
-# Algorithm
+# Algorithms
 # Marcel Massana 23-Nov-2011
 #
 # Computational Geometry Algorithms to use within Euclidean Plane. Use with convenient projections with GPS data,

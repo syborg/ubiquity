@@ -4,10 +4,13 @@
 # A tiny framework to deal with gps tracks
 
 require 'rubygems'
-require 'ubiquity/version'
+require 'ubiquity/algorithms'
+require 'ubiquity/filters'
+require 'ubiquity/geoformulas'
 require 'ubiquity/point'
 require 'ubiquity/track_segment'
-require 'ubiquity/helper'
+require 'ubiquity/version'
+require 'ubiquity/helpers'
 
 module Ubiquity
 

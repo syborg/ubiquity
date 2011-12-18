@@ -22,7 +22,7 @@ module Ubiquity
     # Class latitude used to make projections (calculate x from lon)
 
     # sets the latitude used to project longitudes to x
-    def self.projection_lat=(val)
+    def self.projection_lat=(val=nil)
       @@proj_lat = val
     end
 
@@ -132,6 +132,7 @@ module Ubiquity
     alias within_rect? inside_rect?
     alias in_rect? inside_rect?
 
+    # returns the convex_hull (minimum enclosing poligon)
     def self.convex_hull(*points)
       Ubiquity::Algorithms.convex_hull *points
     end

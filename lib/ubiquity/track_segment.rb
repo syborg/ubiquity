@@ -20,7 +20,7 @@ module Ubiquity
     end
 
     # Adds new points to the end of TrackSegment. If any problem no points are added.
-    # @param args [list of Points, TrackSegments or Arrays of any of them]
+    # @param args [list of Points, TrackSegments or Arrays of any combination of them]
     # @ retuns self if OK, nil if not added elements
     def add_points *args
       last = self.points.length
@@ -36,17 +36,23 @@ module Ubiquity
             raise Ubiquity::Error::BadArgument, "args should be a list of Points, TrackSegments or Arrays of any of them"
         end
       end
-      self.clean_memoized # forces future recalculations
+      clean_memoized # ensures future recalculations
       self
     rescue
-      self.points.slice!(last..-1) # eliminates added elements if any
+      self.points.slice!(last..-1) # in case of error eliminates added elements if any
       nil
     end
 
-    alias + add_points
     alias << add_points
-    alias concatenate add_points
-    alias join add_points
+    alias concatenate! add_points
+    alias join! add_points
+
+    # Creates a new TrackSegment concatenating to the end of self a new TrackSegment,
+    # @param ts [TrackSegment]
+    # @return [TrackSegment]
+    def +(ts)
+      self.clone.add_points ts
+    end
 
     # accepts a gpx (xml) string and parses its first track segment
     def parse_gpx(gpx)
@@ -114,9 +120,19 @@ module Ubiquity
     alias generate_gpx to_gpx
     alias to_xml to_gpx
 
+    # returns an array of elevations if there is such data, else nil. Only first point is checked to decide if there is
+    # elevation data in the whole TrackSegment
+    def elevations
+      if (elems = self.points.first.elems) && elems.has_key?('ele')
+        self.points.map { |p| p.elems['ele'] }
+      else
+        nil
+      end
+    end
+
     # returns the total distance in meters
     def distance
-      # we use memoization cause calculating distance is expensive
+      # we use memoization because calculating distance is expensive
       @distance ||= begin
         self.points.inject(nil) do |a, p|
           new_pt = p
@@ -188,7 +204,7 @@ module Ubiquity
       @convex_hull ||= Algorithms.convex_hull(*self.points)
     end
 
-    #private
+    private
 
     # cleans internally precalculated (memoized) data.
     def clean_memoized

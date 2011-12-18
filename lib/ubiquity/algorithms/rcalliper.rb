@@ -14,7 +14,7 @@ module Ubiquity
       # http://www.tcs.fudan.edu.cn/rudolf/Courses/Algorithms/Alg_ss_07w/Webprojects/Qinbo_diameter/2d_alg.htm
       # @param points [list of Point that represents a convex polygon]
       # @return array of arrays of two points representing all antipodal pairs
-      # (Input polygon should be convex. No check is done)
+      # (Warning! Input polygon should be convex. No check is done)
       def antipodals(*points)
 
         # inicialment escombrem per a trobar el primer punt a maxima distancia de p[0]
