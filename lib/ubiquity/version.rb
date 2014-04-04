@@ -6,8 +6,8 @@ module Ubiquity
 
     MAJOR = 0
     MINOR = 0
-    PATCH = 0
-    BUILD = 'pre1'  # use nil if not used
+    PATCH = 1
+    BUILD = 0  # use nil if not used
 	
     STRING = [MAJOR, MINOR, PATCH, BUILD].compact.join(".")
 

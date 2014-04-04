@@ -4,11 +4,11 @@
 $:.unshift File.join(File.dirname(__FILE__), '..', 'lib')
 
 require 'rubygems'
-require "test/unit"
+require "minitest/autorun"
 require "ubiquity/helpers"
 
 
-class TC_Helper < Test::Unit::TestCase
+class TC_Helper < Minitest::Test
 
   # Called before every test method runs. Can be used
   # to set up fixture information.

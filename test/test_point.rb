@@ -4,11 +4,11 @@
 $:.unshift File.join(File.dirname(__FILE__),'..','lib')
 
 require 'rubygems'
-require 'test/unit'
+require 'minitest/autorun'
 require 'ubiquity/point'
 
 
-class TC_Point < Test::Unit::TestCase
+class TC_Point < Minitest::Test
 
   def setup
     @point1 = Ubiquity::Point.new 41.567299, 1.904531

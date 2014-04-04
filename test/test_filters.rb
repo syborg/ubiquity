@@ -4,10 +4,10 @@
 $:.unshift File.join(File.dirname(__FILE__), '..', 'lib')
 
 require 'rubygems'
-require 'test/unit'
+require 'minitest/autorun'
 require 'ubiquity/filters'
 
-class TC_Filters < Test::Unit::TestCase
+class TC_Filters < Minitest::Test
 
   def setup
 

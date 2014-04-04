@@ -1,10 +1,11 @@
 # example_process_gpx
 # Marcel Massana 4-Dec-2011
 
+$: << '../lib'
+
+require 'ubiquity'
 require 'pp'
 
-require 'rubygems'
-require 'ubiquity'
 
 my_dir=File.dirname(__FILE__)
 fname = 'Mirasol-Can Rabella'
